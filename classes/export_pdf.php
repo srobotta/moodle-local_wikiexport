@@ -66,9 +66,15 @@ class export_pdf extends \pdf {
     public function Image($file, $x = '', $y = '', $w = 0, $h = 0, $type = '', $link = '', $align = '', $resize = false,
                           $dpi = 300, $palign = '', $ismask = false, $imgmask = false, $border = 0, $fitbox = false, $hidden = false,
                           $fitonpage = false, $alt = false, $altimgs = []) {
+
         if ($this->directimageload) {
             // Get the image data directly from the Moodle files API (needed when generating within cron, instead of downloading).
-            $file = $this->get_image_data($file);
+            try {
+                $file = $this->get_image_data($file);
+            } catch (\Exception $e) {
+                parent::writeHTML(get_string('failedinsertimage', 'local_wikiexport', $file));
+                return;
+            }
         } else {
             // Make sure the filename part of the URL is urlencoded (convert spaces => %20, etc.).
             if (strpos('pluginfile.php', $file) !== false) {
@@ -84,7 +90,21 @@ class export_pdf extends \pdf {
             parent::Image($file, $x, $y, $w, $h, $type, $link, $align, $resize, $dpi, $palign, $ismask, $imgmask, $border,
                           $fitbox, $hidden, $fitonpage, $alt, $altimgs);
         } catch (\Exception $e) {
-            $this->writeHTML(get_string('failedinsertimage', 'local_wikiexport', $file));
+            parent::writeHTML(get_string('failedinsertimage', 'local_wikiexport', $file));
+        }
+    }
+
+    /**
+     * The same as the parent however, do not destroy the object vars.
+     * @param string $msg The error message
+     * @public
+     * @since 1.0
+     */
+    public function Error($msg) {
+        if (defined('K_TCPDF_THROW_EXCEPTION_ERROR') AND !K_TCPDF_THROW_EXCEPTION_ERROR) {
+            die('<strong>TCPDF ERROR: </strong>'.$msg);
+        } else {
+            throw new \Exception('TCPDF ERROR: '.$msg);
         }
     }
 

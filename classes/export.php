@@ -393,10 +393,9 @@ class export {
             $exp->set_publisher(get_string('publishername', 'local_wikiexport'));
         } else { // PDF.
             $exp = new export_pdf();
-            $restricttocontext = false;
-            if ($download) {
-                $restricttocontext = \context_module::instance($this->cm->id);
-            }
+            $exp->SetCreator(PDF_CREATOR);
+            $exp->SetTitle($this->wiki->name);
+            $restricttocontext = $download ? \context_module::instance($this->cm->id) : false;
             $exp->use_direct_image_load($restricttocontext);
             $exp->SetMargins(20, 10, -1, true); // Set up wider left margin than default.
         }
