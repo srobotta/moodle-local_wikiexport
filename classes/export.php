@@ -319,6 +319,11 @@ class export {
             // Fix pluginfile urls.
             $page->content = file_rewrite_pluginfile_urls($page->content, 'pluginfile.php', $context->id,
                                                           'mod_wiki', 'attachments', $subwiki->id);
+            // For html based exports (PDF, Epub), remove unwanted line breaks because they become <br> tags.
+            if ($this->wiki->defaultformat === 'html') {
+                $page->content = $this->format_line_breaks_for_html($page->content);
+            }
+            // Format text in general.
             $page->content = format_text($page->content, FORMAT_MOODLE, array('overflowdiv' => true, 'allowid' => true));
 
             // Fix internal links.
@@ -403,10 +408,46 @@ class export {
         return $exp;
     }
 
+    /**
+     * When the format is HTML, convert all linebreaks to spaces, so that the text is not split across lines.
+     * Preserve linebreaks within <pre> and <code> tags only.
+     *
+     * @param string $content
+     * @return string
+     */
+    protected function format_line_breaks_for_html(string $content): string {
+        $token = '##!~~~[%d]~~~!##';
+        $preserve = [];
+        foreach (['pre', 'code'] as $tag) {
+            $offset = 0;
+            while (true) {
+                $p = mb_stripos($content, "<{$tag}", $offset);
+                if ($p === false) {
+                    break;
+                }
+                $q = mb_stripos($content, "</{$tag}>", $p);
+                if ($q === false) {
+                    break;
+                }
+                $preserve[] = mb_substr($content, $p, $q - $p + mb_strlen("</{$tag}>"));
+                $content = mb_substr($content, 0, $p)
+                    . sprintf($token, count($preserve))
+                    . mb_substr($content, $q + mb_strlen("</{$tag}>"));
+                // Remember the offset for the next iteration, to avoid search from the beginning.
+                $offset = $p;
+            }
+        }
+        $content = str_replace(["\r", "\n"], ['', ' '], $content);
+        foreach ($preserve as $idx => $tag) {
+            $content = str_replace(sprintf($token, $idx + 1), $tag, $content);
+        }
+        return $content;
+    }
+
     protected function export_page($exp, $page) {
         if ($this->exporttype == self::EXPORT_EPUB) {
             /** @var export_epub $exp */
-            $content = '<h1>'.$page->title.'</h1>'.$page->content;
+            $content = '<h1>'.$page->title.'</h1>' . $page->content;
             $href = 'pageid-'.$page->id.'.html';
             $exp->add_html($content, $page->title, array('tidy' => false, 'href' => $href, 'toc' => true));
 

@@ -62,4 +62,37 @@ class export_test extends \advanced_testcase {
 
         $this->assertEmpty($emails);
     }
+
+    public function test_format_line_breaks_for_html(): void {
+        global $USER;
+
+        $gen = self::getDataGenerator();
+        /** @var \mod_wiki_generator $wgen */
+        $wgen = $gen->get_plugin_generator('mod_wiki');
+
+        self::setAdminUser();
+        $c1 = $gen->create_course();
+        $w1 = $wgen->create_instance(['course' => $c1->id, 'name' => 'Example wiki']);
+        self::setUser();
+        $export = new \local_wikiexport\export($w1->cmid, $w1, 'epub', $USER, null);
+    
+        $reflectionMethod = new \ReflectionMethod(get_class($export), 'format_line_breaks_for_html');
+        $reflectionMethod->setAccessible(true);
+        $this->assertEquals(
+            'The cat page ',
+            $reflectionMethod->invokeArgs($export, ["The\r\ncat page\n"])
+        );
+        $this->assertEquals(
+            "This is the <code>\ndog\n  inner 1\n/dog\n</code>page",
+            $reflectionMethod->invokeArgs($export, ["This is the <code>\ndog\n  inner 1\n/dog\n</code>page"])
+        );
+        $this->assertEquals(
+            "Some Code: <pre><code>\nimport os\n\nprint('foo bar')\n</code></pre> Fig. 1",
+            $reflectionMethod->invokeArgs($export, ["Some Code:\n<pre><code>\nimport os\n\nprint('foo bar')\n</code></pre>\nFig. 1"])
+        );
+        $this->assertEquals(
+            "Some Code: <pre><code data-lang=\"python\">\nimport os\n\nprint('foo bar')\n</code></pre> Fig. 1",
+            $reflectionMethod->invokeArgs($export, ["Some Code: <pre><code data-lang=\"python\">\nimport os\n\nprint('foo bar')\n</code></pre> Fig. 1"])
+        );
+    }
 }
