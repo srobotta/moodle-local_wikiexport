@@ -376,11 +376,7 @@ class export {
         }
 
         // Remove any 'edit' links.
-        $page->content = preg_replace('|<a href="edit\.php.*?\[edit]</a>|', '', $page->content);
-        $page->content = preg_replace('|<a href="edit\.php.*?\[Bearbeiten\]</a>|', '', $page->content);
-        $page->content = preg_replace('|<a href="edit\.php.*?\[modifica\]</a>|', '', $page->content);
-        $page->content = preg_replace('|<a href="edit\.php.*?\[Modifier\]</a>|', '', $page->content);
-        $page->content = preg_replace('|<a href="edit\.php.*?\[Editar\]</a>|', '', $page->content);
+        $page->content = preg_replace('|<a href="edit\.php.*?\[[^\]]*\]</a>|', '', $page->content);
     }
 
     protected function start_export($download) {
