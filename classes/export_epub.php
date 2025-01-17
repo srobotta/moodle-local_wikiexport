@@ -47,8 +47,12 @@ class export_epub extends \LuciEPUB {
                         $file->get_itemid(), $file->get_filepath(), $file->get_filename(),
                     ]);
                     $newpath = str_replace(['///', '//'], '/', $newpath);
-                    $this->add_item_file($file->get_content_file_handle(), $file->get_mimetype(), $newpath);
-                    $html = str_replace($imageurl, $newpath, $html);
+                    try {
+                        $this->add_item_file($file->get_content_file_handle(), $file->get_mimetype(), $newpath);
+                        $html = str_replace($imageurl, $newpath, $html);
+                    } catch (\Exception $e) {
+                        continue;
+                    }
                 }
             }
         }
