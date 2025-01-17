@@ -113,5 +113,5 @@ function xmldb_local_wikiexport_upgrade($oldversion = 0) {
         upgrade_plugin_savepoint(true, 2015071300, 'local', 'wikiexport');
     }
 
-   return true;
+    return true;
 }
