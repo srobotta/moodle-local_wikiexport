@@ -26,6 +26,8 @@ defined('MOODLE_INTERNAL') || die();
 
 if ($hassiteconfig) {
     if (!$page = $ADMIN->locate('modsettingwiki')) {
+        $lang = current_language();
+        $collator = new \Collator($lang);
         // No settings page exists for the wiki - add it.
         $wikiname = get_string('pluginname', 'wiki');
         $page = new admin_settingpage('modsettingwiki', $wikiname);
@@ -34,7 +36,8 @@ if ($hassiteconfig) {
         $beforesibling = null;
         $modules = $ADMIN->locate('modsettings');
         foreach ($modules->children as $module) {
-            if (strcmp($module->visiblename, $wikiname) > 0) {
+            $visiblename = ($module->visiblename instanceof lang_string) ? $module->visiblename->out(false) : $module->visiblename;
+            if ($collator->compare($visiblename, $wikiname) > 0) {
                 $beforesibling = $module->name;
                 break;
             }
